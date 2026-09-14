@@ -250,7 +250,7 @@ function renderStart() {
               <div style="padding:9px 18px;border-radius:99px;background:#bfe1de;font-size:14px">Gissa platsen</div>
             </div>
             <h1 style="font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:clamp(40px,7.4vw,68px);line-height:1.02;letter-spacing:-.01em;color:#5c4741;margin:0">Ralucas resor <em style="color:#e0538c">de senaste 10 åren</em></h1>
-            <p style="margin:0;font-size:18px;line-height:1.55;color:#6b5852;max-width:40ch">Var är bilden tagen? Facit kommer från bildernas egen GPS-metadata — inte från vad du tror att du ser.</p>
+            <p style="margin:0;font-size:18px;line-height:1.55;color:#6b5852;max-width:40ch">Var är bilden tagen? Det kan vara svårt att ha koll på Raluca och alla hennes resor. Hur bra koll har du?</p>
             <div style="background:#fff8ee;border-radius:26px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 50px -34px rgba(71,56,52,.5)">
               <label for="rr-name" style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#a08d86">Ditt namn</label>
               <input id="rr-name" value="${esc(state.name)}" maxlength="18" placeholder="Skriv här" style="width:100%;padding:16px 20px;font-size:20px;border:1px solid #eedcd6;border-radius:99px;background:#fffdf8;color:#473834;outline:none">
@@ -269,7 +269,7 @@ function renderStart() {
         </div>
       </div>
       <div style="background:#fff8ee;padding:30px 22px 56px;display:flex;justify-content:center">
-        <div style="max-width:640px;text-align:center;font-size:16px;line-height:1.6;color:#8a746e">Topplistan är gemensam för alla som spelar, oavsett enhet.</div>
+        <div style="max-width:640px;text-align:center;font-size:16px;line-height:1.6;color:#8a746e">© Quiz producerat av Robert Dintica för Dinticason AB</div>
       </div>
     </div>`;
   const nameInput = document.getElementById('rr-name');
@@ -329,9 +329,9 @@ function renderQuiz() {
           <div style="height:100%;width:${progressPct}%;background:${ACCENT};border-radius:99px;transition:width .3s ease"></div>
         </div>
         <div style="display:flex;align-items:center;gap:13px">
-          <div style="font-family:'DM Serif Display',serif;font-size:30px;line-height:1;color:${tcol}${crit && !s.revealed ? ';animation:rr-pulse .7s ease-in-out infinite' : ''}">00:${String(s.left).padStart(2, '0')}</div>
+          <div id="rr-timer-num" style="font-family:'DM Serif Display',serif;font-size:30px;line-height:1;color:${tcol}${crit && !s.revealed ? ';animation:rr-pulse .7s ease-in-out infinite' : ''}">00:${String(s.left).padStart(2, '0')}</div>
           <div style="height:12px;flex:1;background:#fff8ee;border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${timerBarPct}%;background:${tcol};border-radius:99px;transition:width 1s linear"></div>
+            <div id="rr-timer-bar" style="height:100%;width:${timerBarPct}%;background:${tcol};border-radius:99px;transition:width 1s linear"></div>
           </div>
         </div>
         <div style="display:flex;justify-content:center;animation:rr-up .35s ease both">
