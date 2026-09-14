@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ralucas resor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Questrial&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f3ddda; color: #473834; font-family: Questrial, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #e0538c; text-decoration: none; }
+  a:hover { color: #b93a6d; }
+  input { font-family: inherit; }
+  button { font-family: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  @keyframes rr-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @keyframes rr-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes rr-pop { 0% { transform: scale(.94); opacity: 0; } 60% { transform: scale(1.02); } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="root" style="min-height:100vh"></div>
+
+<script>
+/* ============================================================
+   RALUCAS RESOR — fristående version
+   ------------------------------------------------------------
+   Fyll i din Supabase-projekt-URL och anon-nyckel här nedan.
+   Du hittar dem i Supabase: Project Settings -> API.
+   ============================================================ */
+const SUPABASE_URL = "YOUR-SUPABASE-PROJECT-URL";
+const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
+
+const TIMER_SECONDS = 30;
+const QUESTION_COUNT = 36;
+const ACCENT = "#e0538c";
+
+let supa = null;
+try {
+  if (window.supabase && SUPABASE_URL.startsWith("http")) {
+    supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) { console.warn("Supabase init misslyckades", e); }
+
+const DATA = [
+  { img: '01', country: 'Belgien', city: null, spot: 'Brygge', wrong: ['Nederländerna', 'Tyskland', 'Frankrike'] },
+  { img: '02', country: 'Sverige', city: 'Malmö', spot: null, wrong: ['Helsingborg', 'Göteborg', 'Lund'] },
+  { img: '03', country: 'Sverige', city: 'Kristianstad', spot: null, wrong: ['Växjö', 'Karlskrona', 'Kalmar'] },
+  { img: '04', country: 'Rumänien', city: null, spot: 'Dealu Mare', wrong: ['Bulgarien', 'Ungern', 'Moldavien'] },
+  { img: '05', country: 'Frankrike', city: null, spot: 'Nice', wrong: ['Italien', 'Monaco', 'Spanien'] },
+  { img: '06', country: 'USA', city: null, spot: 'San Francisco', wrong: ['Kanada', 'Australien', 'Portugal'] },
+  { img: '07', country: 'Sverige', city: 'Kalmar', spot: null, wrong: ['Karlskrona', 'Västervik', 'Visby'] },
+  { img: '08', country: 'Sverige', city: 'Göteborg', spot: null, wrong: ['Borås', 'Halmstad', 'Uddevalla'] },
+  { img: '09', country: 'Frankrike', city: null, spot: 'Paris', wrong: ['Belgien', 'Storbritannien', 'Italien'] },
+  { img: '10', country: 'Italien', city: null, spot: 'Neapel', wrong: ['Spanien', 'Grekland', 'Portugal'] },
+  { img: '11', country: 'Storbritannien', city: null, spot: 'London', wrong: ['Irland', 'Nederländerna', 'Belgien'] },
+  { img: '12', country: 'Nederländerna', city: null, spot: 'Amsterdam', wrong: ['Belgien', 'Danmark', 'Tyskland'] },
+  { img: '13', country: 'Italien', city: null, spot: 'Lago Maggiore', wrong: ['Schweiz', 'Österrike', 'Slovenien'] },
+  { img: '14', country: 'Rumänien', city: null, spot: 'Bukarest', wrong: ['Bulgarien', 'Serbien', 'Polen'] },
+  { img: '15', country: 'Frankrike', city: null, spot: 'Paris', wrong: ['Belgien', 'Tjeckien', 'Italien'] },
+  { img: '16', country: 'Cypern', city: null, spot: 'Troodosbergen', wrong: ['Grekland', 'Malta', 'Turkiet'] },
+  { img: '17', country: 'Cypern', city: null, spot: 'Protaras', wrong: ['Grekland', 'Kroatien', 'Italien'] },
+  { img: '18', country: 'Sverige', city: 'Stockholm', spot: null, wrong: ['Uppsala', 'Norrtälje', 'Nyköping'] },
+  { img: '19', country: 'Frankrike', city: null, spot: 'Paris', wrong: ['Belgien', 'Spanien', 'Portugal'] },
+  { img: '20', country: 'Belgien', city: null, spot: 'Bryssel', wrong: ['Frankrike', 'Luxemburg', 'Nederländerna'] },
+  { img: '21', country: 'USA', city: null, spot: 'San Francisco', wrong: ['Kanada', 'Italien', 'Spanien'] },
+  { img: '22', country: 'Rumänien', city: null, spot: 'Brașov', wrong: ['Ungern', 'Slovakien', 'Bulgarien'] },
+  { img: '23', country: 'Danmark', city: null, spot: 'Egeskov', wrong: ['Sverige', 'Tyskland', 'Nederländerna'] },
+  { img: '24', country: 'Frankrike', city: null, spot: 'Paris', wrong: ['Italien', 'Spanien', 'Storbritannien'] },
+  { img: '25', country: 'Italien', city: null, spot: 'Rom', wrong: ['Spanien', 'Grekland', 'Frankrike'] },
+  { img: '26', country: 'Rumänien', city: null, spot: 'Săpânța', wrong: ['Ukraina', 'Bulgarien', 'Polen'] },
+  { img: '27', country: 'Japan', city: null, spot: 'Tokyo', wrong: ['Sydkorea', 'Taiwan', 'Kina'] },
+  { img: '28', country: 'Polen', city: null, spot: 'Oświęcim', wrong: ['Tjeckien', 'Tyskland', 'Litauen'] },
+  { img: '29', country: 'Sverige', city: 'Gävle', spot: null, wrong: ['Uppsala', 'Sundsvall', 'Falun'] },
+  { img: '30', country: 'USA', city: null, spot: 'Charleston', wrong: ['Kanada', 'Kuba', 'Mexiko'] },
+  { img: '31', country: 'USA', city: null, spot: 'Miami Beach', wrong: ['Mexiko', 'Kuba', 'Spanien'] },
+  { img: '32', country: 'Kroatien', city: null, spot: 'Dubrovnik', wrong: ['Montenegro', 'Italien', 'Grekland'] },
+  { img: '33', country: 'Sverige', city: null, spot: 'Norrland', wrong: ['Norge', 'Finland', 'Danmark'] },
+  { img: '34', country: 'Rumänien', city: null, spot: null, wrong: ['Bulgarien', 'Ungern', 'Kroatien'] },
+  { img: '35', country: 'Thailand', city: null, spot: null, wrong: ['Vietnam', 'Malaysia', 'Filippinerna'] },
+  { img: '36', country: 'USA', city: null, spot: 'Hollywood', wrong: ['Kanada', 'Mexiko', 'Australien'] }
+];
+
+const RATIOS = {'01':0.474,'02':2.111,'03':2.111,'04':0.750,'05':0.750,'06':0.750,'07':1.333,'08':0.750,'09':0.750,'10':1.333,'11':0.750,'12':0.750,'13':1.333,'14':0.750,'15':1.777,'16':2.222,'17':0.752,'18':2.227,'19':1.330,'20':2.222,'21':2.227,'22':0.450,'23':0.752,'24':1.333,'25':1.777,'26':1.333,'27':1.777,'28':1.777,'29':1.777,'30':1.777,'31':1.333,'32':1.333,'33':1.777,'34':1.777,'35':1.777,'36':1.777};
+
+function shuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+  return r;
+}
+function num(n) { return Math.round(n).toLocaleString('sv-SE'); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const state = {
+  screen: 'start', name: '', qs: [], i: 0, left: TIMER_SECONDS,
+  locPick: null, revealed: false, gained: 0,
+  score: 0, hits: 0, times: [], board: [], boardLoading: false, myId: null
+};
+let tickTimer = null, revealTimeout = null;
+
+function setState(patch) { Object.assign(state, patch); render(); }
+
+function build() {
+  return shuffle(DATA).slice(0, Math.min(DATA.length, QUESTION_COUNT)).map(d => {
+    const swedish = d.country === 'Sverige' && !!d.city;
+    const truth = swedish ? d.city : d.country;
+    return {
+      url: 'photos/' + d.img + '.jpg',
+      ratio: RATIOS[d.img] || 4 / 3,
+      truth,
+      locationQuestion: swedish ? 'Vilken stad är bilden tagen i?' : 'Vilket land är bilden tagen i?',
+      truthPlace: swedish ? d.city + ', Sverige' : d.country + (d.spot ? ' — ' + d.spot : ''),
+      locationOptions: shuffle([truth].concat(d.wrong))
+    };
+  });
+}
+
+async function loadBoard() {
+  if (!supa) return [];
+  try {
+    const { data, error } = await supa
+      .from('leaderboard')
+      .select('*')
+      .order('score', { ascending: false })
+      .order('time', { ascending: true })
+      .limit(12);
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.warn('Kunde inte hämta topplistan', e);
+    return [];
+  }
+}
+
+async function saveEntry(entry) {
+  if (!supa) return null;
+  try {
+    const { data, error } = await supa
+      .from('leaderboard')
+      .insert({ name: entry.name, score: entry.score, hits: entry.hits, of_total: entry.of, time: entry.time })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.warn('Kunde inte spara resultatet', e);
+    return null;
+  }
+}
+
+function run() {
+  clearInterval(tickTimer);
+  tickTimer = setInterval(() => {
+    if (state.revealed) return;
+    const left = state.left - 1;
+    if (left <= 0) { state.left = 0; reveal(true); }
+    else { state.left = left; render(); }
+  }, 1000);
+}
+
+function start() {
+  if (!state.name.trim()) return;
+  setState({ screen: 'quiz', qs: build(), i: 0, left: TIMER_SECONDS, locPick: null, revealed: false, score: 0, hits: 0, times: [], gained: 0 });
+  run();
+}
+
+function pickLoc(v) {
+  if (state.revealed || state.locPick !== null) return;
+  state.locPick = v;
+  reveal(false);
+}
+
+function reveal(timeout) {
+  clearInterval(tickTimer);
+  const q = state.qs[state.i];
+  const ok = state.locPick === q.truth;
+  const left = timeout ? 0 : state.left;
+  const gained = ok ? 700 + Math.round(300 * (left / TIMER_SECONDS)) : 0;
+  state.revealed = true;
+  state.gained = gained;
+  state.left = left;
+  state.score += gained;
+  state.hits += ok ? 1 : 0;
+  state.times = state.times.concat([TIMER_SECONDS - left]);
+  render();
+  if (timeout) revealTimeout = setTimeout(next, 2200);
+}
+
+function next() {
+  clearTimeout(revealTimeout);
+  const i = state.i + 1;
+  if (i >= state.qs.length) return finish();
+  setState({ i, left: TIMER_SECONDS, locPick: null, revealed: false, gained: 0 });
+  run();
+}
+
+async function finish() {
+  const total = state.times.reduce((a, b) => a + b, 0);
+  const entry = { name: state.name.trim(), score: state.score, hits: state.hits, of: state.qs.length, time: total };
+  setState({ screen: 'result', boardLoading: true });
+  const saved = await saveEntry(entry);
+  const board = await loadBoard();
+  setState({ board, boardLoading: false, myId: saved ? saved.id : null });
+}
+
+async function goBoard() {
+  setState({ screen: 'board', boardLoading: true });
+  const board = await loadBoard();
+  setState({ board, boardLoading: false });
+}
+
+function replay() {
+  clearInterval(tickTimer); clearTimeout(revealTimeout);
+  setState({ screen: 'start', name: '' });
+}
+
+function optStyle(kind) {
+  const base = 'padding:18px 14px;min-height:60px;border-radius:20px;font-size:17px;text-align:center;transition:transform .12s ease, background .15s ease;border:1px solid ';
+  if (kind === 'idle') return base + '#f0dcd7;background:#fff8ee;color:#473834';
+  if (kind === 'right') return base + '#1f7a5a;background:#1f7a5a;color:#f2fbf7';
+  if (kind === 'wrong') return base + '#c23c68;background:#fbdde6;color:#97264b';
+  return base + '#f0dcd7;background:#faefe6;color:#b0a09a';
+}
+function pill(bg, fg) { return 'width:100%;padding:18px;border:0;border-radius:99px;background:' + bg + ';color:' + fg + ';font-size:15px;letter-spacing:.12em;text-transform:uppercase'; }
+
+const root = document.getElementById('root');
+
+function render() {
+  const s = state;
+  if (s.screen === 'start') return renderStart();
+  if (s.screen === 'quiz') return renderQuiz();
+  if (s.screen === 'result') return renderResult();
+  if (s.screen === 'board') return renderBoard();
+}
+
+function renderStart() {
+  const ready = state.name.trim().length > 0;
+  root.innerHTML = `
+    <div style="min-height:100vh;display:flex;flex-direction:column">
+      <div style="flex:1;padding:44px 22px 90px;border-radius:0 0 48% 48% / 0 0 9% 9%;display:flex;justify-content:center;background:#f3ddda">
+        <div style="width:100%;max-width:1080px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:34px;align-items:center">
+          <div style="display:flex;flex-direction:column;gap:22px;animation:rr-up .6s ease both">
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <div style="padding:9px 18px;border-radius:99px;background:#fbd24e;font-size:14px">${QUESTION_COUNT} bilder</div>
+              <div style="padding:9px 18px;border-radius:99px;background:#cabce9;font-size:14px">13 länder</div>
+              <div style="padding:9px 18px;border-radius:99px;background:#f8b195;font-size:14px">${TIMER_SECONDS} sekunder per bild</div>
+              <div style="padding:9px 18px;border-radius:99px;background:#bfe1de;font-size:14px">Gissa platsen</div>
+            </div>
+            <h1 style="font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:clamp(40px,7.4vw,68px);line-height:1.02;letter-spacing:-.01em;color:#5c4741;margin:0">Ralucas resor <em style="color:#e0538c">de senaste 10 åren</em></h1>
+            <p style="margin:0;font-size:18px;line-height:1.55;color:#6b5852;max-width:40ch">Var är bilden tagen? Facit kommer från bildernas egen GPS-metadata — inte från vad du tror att du ser.</p>
+            <div style="background:#fff8ee;border-radius:26px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 50px -34px rgba(71,56,52,.5)">
+              <label for="rr-name" style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#a08d86">Ditt namn</label>
+              <input id="rr-name" value="${esc(state.name)}" maxlength="18" placeholder="Skriv här" style="width:100%;padding:16px 20px;font-size:20px;border:1px solid #eedcd6;border-radius:99px;background:#fffdf8;color:#473834;outline:none">
+              <button id="rr-start" ${ready ? '' : 'disabled'} style="${pill(ready ? ACCENT : '#efdcd6', ready ? '#fffdf8' : '#b7a29b')}${ready ? '' : ';cursor:not-allowed'}">Starta quiz</button>
+              <button id="rr-board" style="width:100%;padding:12px;border:0;background:none;color:#a08d86;font-size:13px;letter-spacing:.12em;text-transform:uppercase">Topplista</button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;animation:rr-pop .7s ease both">
+            <div style="position:relative;width:min(100%,400px);aspect-ratio:4/5">
+              <div style="position:absolute;inset:0;border-radius:46% 46% 42% 42% / 38% 38% 50% 50%;background:#fbb2ce"></div>
+              <div style="position:absolute;inset:12px;border-radius:46% 46% 42% 42% / 38% 38% 50% 50%;overflow:hidden">
+                <img src="photos/raluca.png" alt="Raluca" style="width:100%;height:100%;object-fit:cover;display:block">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff8ee;padding:30px 22px 56px;display:flex;justify-content:center">
+        <div style="max-width:640px;text-align:center;font-size:16px;line-height:1.6;color:#8a746e">Topplistan är gemensam för alla som spelar, oavsett enhet.</div>
+      </div>
+    </div>`;
+  const nameInput = document.getElementById('rr-name');
+  nameInput.oninput = e => { state.name = e.target.value; document.getElementById('rr-start').disabled = !state.name.trim(); document.getElementById('rr-start').setAttribute('style', pill(state.name.trim() ? ACCENT : '#efdcd6', state.name.trim() ? '#fffdf8' : '#b7a29b') + (state.name.trim() ? '' : ';cursor:not-allowed')); };
+  nameInput.onkeydown = e => { if (e.key === 'Enter') start(); };
+  nameInput.focus();
+  document.getElementById('rr-start').onclick = start;
+  document.getElementById('rr-board').onclick = goBoard;
+}
+
+function renderQuiz() {
+  const s = state, q = s.qs[s.i];
+  const frac = s.left / TIMER_SECONDS, crit = s.left <= 5, warn = s.left <= 10;
+  const tcol = crit ? '#c23c68' : warn ? '#d98324' : '#5c4741';
+  const progressPct = ((s.i + (s.revealed ? 1 : 0)) / s.qs.length) * 100;
+  const timerBarPct = Math.max(0, frac) * 100;
+
+  const optionsHtml = q.locationOptions.map((o, idx) => {
+    const kind = !s.revealed ? 'idle' : (o === q.truth ? 'right' : s.locPick === o ? 'wrong' : 'dim');
+    return `<button class="rr-opt" data-opt="${esc(o)}" style="${optStyle(kind)}">${esc(o)}</button>`;
+  }).join('');
+
+  let revealHtml = '';
+  if (s.revealed) {
+    const ok = s.locPick === q.truth;
+    revealHtml = `
+      <div style="background:#fff8ee;border-radius:26px;padding:24px;display:flex;flex-direction:column;gap:16px;animation:rr-pop .3s ease both">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div style="font-family:'DM Serif Display',serif;font-size:36px;line-height:1;color:${ok ? '#1f7a5a' : '#c23c68'}">${ok ? 'Rätt!' : (s.locPick === null ? 'Tiden ute' : 'Fel')}</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:32px;line-height:1;color:#e0538c">+${num(s.gained)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a08d86">Rätt svar</div>
+            <div style="font-size:19px;color:#5c4741">${esc(q.truthPlace)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a08d86">Du svarade</div>
+            <div style="font-size:19px;color:${ok ? '#1f7a5a' : '#c23c68'}">${esc(s.locPick === null ? 'Inget svar' : s.locPick)}</div>
+          </div>
+        </div>
+        <button id="rr-next" style="${pill(ACCENT, '#fffdf8')}">${s.i === s.qs.length - 1 ? 'Se resultat' : 'Nästa bild →'}</button>
+      </div>`;
+  }
+
+  root.innerHTML = `
+    <div style="min-height:100vh;display:flex;justify-content:center;padding:20px 18px 48px">
+      <div style="width:100%;max-width:620px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+          <div style="padding:7px 15px;border-radius:99px;background:#fff8ee;font-size:14px;letter-spacing:.04em">${s.i + 1} / ${s.qs.length}</div>
+          <div style="display:flex;align-items:baseline;gap:9px">
+            <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#a08d86">Poäng</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:26px;line-height:1;color:#5c4741">${num(s.score)}</div>
+          </div>
+        </div>
+        <div style="height:8px;background:#fff8ee;border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${progressPct}%;background:${ACCENT};border-radius:99px;transition:width .3s ease"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:13px">
+          <div style="font-family:'DM Serif Display',serif;font-size:30px;line-height:1;color:${tcol}${crit && !s.revealed ? ';animation:rr-pulse .7s ease-in-out infinite' : ''}">00:${String(s.left).padStart(2, '0')}</div>
+          <div style="height:12px;flex:1;background:#fff8ee;border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${timerBarPct}%;background:${tcol};border-radius:99px;transition:width 1s linear"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;animation:rr-up .35s ease both">
+          <img src="${q.url}" alt="" style="aspect-ratio:${q.ratio.toFixed(4)};width:100%;max-width:calc(min(44vh,400px) * ${q.ratio.toFixed(4)});max-height:min(44vh,400px);margin:0 auto;border-radius:26px;background:#f3ddda;object-fit:contain;display:block">
+        </div>
+        ${!s.revealed ? `
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <div style="font-family:'DM Serif Display',serif;font-size:25px;line-height:1.15;color:#5c4741">${esc(q.locationQuestion)}</div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${optionsHtml}</div>
+        </div>` : revealHtml}
+      </div>
+    </div>`;
+
+  if (!s.revealed) {
+    root.querySelectorAll('.rr-opt').forEach(btn => btn.onclick = () => pickLoc(btn.dataset.opt));
+  } else {
+    const nextBtn = document.getElementById('rr-next');
+    if (nextBtn) nextBtn.onclick = next;
+  }
+}
+
+function renderResult() {
+  const s = state;
+  const t = s.times.reduce((a, b) => a + b, 0), n = s.qs.length || 1;
+  const hitsText = s.hits + ' / ' + n;
+  const pctText = Math.round((s.hits / n) * 100) + ' %';
+  const avgText = (s.times.length ? (t / s.times.length).toFixed(1) : '0') + ' s';
+  root.innerHTML = `
+    <div style="min-height:100vh;display:flex;justify-content:center;align-items:center;padding:40px 18px">
+      <div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:20px;animation:rr-up .5s ease both">
+        <div>
+          <div style="font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#a08d86">Klart</div>
+          <h1 style="font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(42px,12vw,68px);line-height:1;color:#5c4741;margin:6px 0 0">${esc(s.name)}</h1>
+        </div>
+        <div style="background:#fff8ee;border-radius:30px;padding:28px;display:flex;flex-direction:column;gap:20px">
+          <div>
+            <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#a08d86">Slutpoäng</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:clamp(58px,16vw,86px);line-height:1;color:#e0538c">${num(s.score)}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+            <div style="background:#fbd24e;border-radius:20px;padding:16px">
+              <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b5852">Rätt</div>
+              <div style="font-size:21px;color:#473834">${hitsText}</div>
+            </div>
+            <div style="background:#cabce9;border-radius:20px;padding:16px">
+              <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b5852">Träffar</div>
+              <div style="font-size:21px;color:#473834">${pctText}</div>
+            </div>
+            <div style="background:#bfe1de;border-radius:20px;padding:16px">
+              <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b5852">Snittid</div>
+              <div style="font-size:21px;color:#473834">${avgText}</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button id="rr-board2" style="${pill(ACCENT, '#fffdf8')}">${s.boardLoading ? 'Sparar...' : 'Topplista'}</button>
+          <button id="rr-replay" style="width:100%;padding:18px;border:1px solid #e6cfc8;border-radius:99px;background:none;color:#5c4741;font-size:15px;letter-spacing:.12em;text-transform:uppercase">Spela igen</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('rr-board2').onclick = () => setState({ screen: 'board' });
+  document.getElementById('rr-replay').onclick = replay;
+}
+
+function renderBoard() {
+  const s = state;
+  const rows = (s.board || []).slice().sort((a, b) => b.score - a.score || a.time - b.time).slice(0, 12);
+  const rowsHtml = rows.length ? rows.map((e, idx) => {
+    const rank = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : String(idx + 1);
+    const mine = s.myId && e.id === s.myId;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #f4e4da;${mine ? 'background:#fbdde6;box-shadow:inset 4px 0 0 ' + ACCENT : ''}">
+      <div style="width:34px;font-size:17px">${rank}</div>
+      <div style="flex:1;min-width:0;font-size:18px;color:#5c4741;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.name)}</div>
+      <div style="font-size:13px;color:#a08d86">${e.hits}/${e.of_total || 36}</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:24px;line-height:1;color:#e0538c">${num(e.score)}</div>
+    </div>`;
+  }).join('') : `<div style="padding:30px;text-align:center;color:#a08d86;font-size:16px">${s.boardLoading ? 'Laddar...' : (supa ? 'Ingen har spelat än.' : 'Topplistan är inte ikopplad än (fyll i Supabase-nycklarna i koden).')}</div>`;
+
+  root.innerHTML = `
+    <div style="min-height:100vh;display:flex;justify-content:center;padding:40px 18px 56px">
+      <div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:18px;animation:rr-up .4s ease both">
+        <h1 style="font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(40px,11vw,62px);line-height:1;color:#5c4741;margin:0">Topplista</h1>
+        <div style="background:#fff8ee;border-radius:26px;overflow:hidden">${rowsHtml}</div>
+        <button id="rr-replay2" style="${pill(ACCENT, '#fffdf8')}">Spela igen</button>
+      </div>
+    </div>`;
+  document.getElementById('rr-replay2').onclick = replay;
+}
+
+render();
+</script>
+</body>
+</html>
