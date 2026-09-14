@@ -151,13 +151,29 @@ async function saveEntry(entry) {
   }
 }
 
+function updateTimerDisplay() {
+  const s = state;
+  if (s.screen !== 'quiz') return render();
+  const numEl = document.getElementById('rr-timer-num');
+  const barEl = document.getElementById('rr-timer-bar');
+  if (!numEl || !barEl) return render();
+  const crit = s.left <= 5, warn = s.left <= 10;
+  const tcol = crit ? '#c23c68' : warn ? '#d98324' : '#5c4741';
+  const frac = Math.max(0, s.left / TIMER_SECONDS);
+  numEl.textContent = '00:' + String(s.left).padStart(2, '0');
+  numEl.style.color = tcol;
+  numEl.style.animation = (crit && !s.revealed) ? 'rr-pulse .7s ease-in-out infinite' : '';
+  barEl.style.width = (frac * 100) + '%';
+  barEl.style.background = tcol;
+}
+
 function run() {
   clearInterval(tickTimer);
   tickTimer = setInterval(() => {
     if (state.revealed) return;
     const left = state.left - 1;
     if (left <= 0) { state.left = 0; reveal(true); }
-    else { state.left = left; render(); }
+    else { state.left = left; updateTimerDisplay(); }
   }, 1000);
 }
 
